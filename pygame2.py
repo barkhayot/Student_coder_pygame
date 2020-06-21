@@ -27,12 +27,22 @@ playerX = 370
 playerY = 480
 playerX_change = 0
 
-# Zombie 
-zombieImg = pygame.image.load("zombie.png")
-zombieX = random.randint(0, 735 )
-zombieY = random.randint(50, 150)
-zombieX_change = 3 
-zombieY_change = 30
+# Multiple Zombies 
+zombieImg = []
+zombieX = []
+zombieY = []
+zombieX_change = []
+zombieY_change = []
+num_of_zombies = 5
+
+for i in range(num_of_zombies):
+
+    # Zombie 
+    zombieImg.append(pygame.image.load("zombie.png"))
+    zombieX.append(random.randint(0, 735 ))
+    zombieY.append(random.randint(50, 150))
+    zombieX_change.append(3) 
+    zombieY_change.append(30)
 
 # Nut (Shooting) 
 # Ready - You can not see the Nut on the screen 
@@ -44,14 +54,31 @@ nutX_change = 0
 nutY_change = 10
 nut_state = "ready"
 
-score = 0
+# Score 
+score_value = 0
+font = pygame.font.Font("cherry.ttf", 32)
+
+textX = 10
+textY = 10
+
+# Game Over 
+over_font = pygame.font.Font("cherry.ttf", 64)
+
+def game_over_text():
+    over_text = over_font.render("GAME OVER", True, (255, 255, 255))
+    screen.blit(over_text, (200, 250))
+
+
+def show_score(x, y):
+    score = font.render("Score : " + str(score_value), True, (255, 255, 255))
+    screen.blit(score, (x, y))
 
 
 def player(x, y):
     screen.blit(playerImg, (x, y))
 
-def zombie(x, y):
-    screen.blit(zombieImg, (x, y))
+def zombie(x, y, i):
+    screen.blit(zombieImg[i], (x, y))
 
 def fire_nut(x, y):
     global nut_state
@@ -105,14 +132,35 @@ while running:
     
 
     # Zombie movement
-    zombieX += zombieX_change
-    
-    if zombieX <= 0:
-        zombieX_change = 3
-        zombieY += zombieY_change
-    elif zombieX >= 736:
-        zombieX_change = -3
-        zombieY += zombieY_change
+    for i in range(num_of_zombies):
+
+        # Game Over 
+        if zombieY[i] > 400:
+            for j in range(num_of_zombies):
+                 zombieY[j] = 2000
+            game_over_text()
+            break
+
+
+        zombieX[i] += zombieX_change[i]
+        if zombieX[i] <= 0:
+            zombieX_change[i] = 3
+            zombieY[i] += zombieY_change[i]
+        elif zombieX[i] >= 736:
+            zombieX_change[i] = -3
+            zombieY[i] += zombieY_change[i]
+        
+        # Collision
+        collision = isCollision(zombieX[i], zombieY[i], nutX, nutY)
+        if collision:
+            nutY = 480
+            nut_state = "ready"
+            score_value  += 1
+            zombieX[i] = random.randint(0, 735)
+            zombieY[i] = random.randint(50, 150)
+        
+        zombie(zombieX[i], zombieY[i], i)
+
     
     # Nut movement 
     if nutY <= 0:
@@ -123,18 +171,10 @@ while running:
         fire_nut(nutX, nutY)
         nutY -= nutY_change
 
-    # Collision
-    collision = isCollision(zombieX, zombieY, nutX, nutY)
-    if collision:
-        nutY = 480
-        nut_state = "ready"
-        score += 1
-        print(score)
-        zombieX = random.randint(0, 735)
-        zombieY = random.randint(50, 150)
-
+    
 
 
     player(playerX, playerY)
-    zombie(zombieX, zombieY)
+    
+    show_score(textX, textY)
     pygame.display.update()
